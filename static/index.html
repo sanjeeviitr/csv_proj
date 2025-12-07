@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Processing System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2f5;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .file-input-label:active {
+            transform: translateY(0);
+        }
+
+        .file-name {
+            margin-top: 15px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-group label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .option-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .option-group input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .process-btn {
+            padding: 15px 50px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            margin-top: 20px;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-header h2 {
+            font-size: 1.5em;
+        }
+
+        .copy-btn {
+            padding: 8px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: #f0f2f5;
+            transform: scale(1.05);
+        }
+
+        .results-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 CSV Data Processing System</h1>
+            <p>Upload, Clean, Analyze & Detect Anomalies</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <h2 style="margin-bottom: 20px; color: #333;">Upload Your CSV File</h2>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".csv" />
+                    <label for="fileInput" class="file-input-label">
+                        📁 Choose CSV File
+                    </label>
+                </div>
+                <div class="file-name" id="fileName"></div>
+
+                <div class="options">
+                    <div class="option-group">
+                        <input type="checkbox" id="detectAnomalies" checked />
+                        <label for="detectAnomalies">Detect Anomalies</label>
+                    </div>
+                    <div class="option-group">
+                        <label for="contamination">Contamination:</label>
+                        <input type="number" id="contamination" value="0.1" min="0.01" max="0.5" step="0.01" />
+                    </div>
+                </div>
+
+                <button class="process-btn" id="processBtn" disabled>🚀 Process CSV</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: #667eea; font-weight: 600;">Processing your CSV file...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="results" id="results">
+                <div class="summary-cards" id="summaryCards"></div>
+                <div class="results-header">
+                    <h2>📋 Results (JSON)</h2>
+                    <button class="copy-btn" id="copyBtn">📋 Copy JSON</button>
+                </div>
+                <div class="results-content" id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+        const error = document.getElementById('error');
+        const copyBtn = document.getElementById('copyBtn');
+        const summaryCards = document.getElementById('summaryCards');
+        const detectAnomalies = document.getElementById('detectAnomalies');
+        const contamination = document.getElementById('contamination');
+
+        let jsonData = null;
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                processBtn.disabled = false;
+            } else {
+                fileName.textContent = '';
+                processBtn.disabled = true;
+            }
+        });
+
+        processBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                showError('Please select a CSV file first.');
+                return;
+            }
+
+            // Reset UI
+            error.classList.remove('active');
+            results.classList.remove('active');
+            loading.classList.add('active');
+            processBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const params = new URLSearchParams({
+                    detect_anomalies: detectAnomalies.checked,
+                    anomaly_contamination: contamination.value
+                });
+
+                const response = await fetch(`/process-csv?${params}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'An error occurred');
+                }
+
+                jsonData = data;
+                displayResults(data);
+            } catch (err) {
+                showError(err.message || 'Failed to process CSV file. Please try again.');
+            } finally {
+                loading.classList.remove('active');
+                processBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            // Create summary cards
+            const cards = [];
+            
+            if (data.cleaning_report) {
+                cards.push({
+                    title: 'Initial Rows',
+                    value: data.cleaning_report.initial_rows || 0
+                });
+                cards.push({
+                    title: 'Final Rows',
+                    value: data.cleaning_report.final_rows || 0
+                });
+                cards.push({
+                    title: 'Duplicates Removed',
+                    value: data.cleaning_report.duplicates_removed || 0
+                });
+            }
+
+            if (data.statistics?.dataset_overview) {
+                cards.push({
+                    title: 'Total Columns',
+                    value: data.statistics.dataset_overview.total_columns || 0
+                });
+            }
+
+            if (data.anomalies) {
+                cards.push({
+                    title: 'Anomalies Detected',
+                    value: data.anomalies.anomalies_detected || 0
+                });
+            }
+
+            summaryCards.innerHTML = cards.map(card => `
+                <div class="summary-card">
+                    <h3>${card.title}</h3>
+                    <div class="value">${card.value}</div>
+                </div>
+            `).join('');
+
+            // Display JSON
+            resultsContent.textContent = JSON.stringify(data, null, 2);
+            results.classList.add('active');
+        }
+
+        function showError(message) {
+            error.textContent = `❌ Error: ${message}`;
+            error.classList.add('active');
+        }
+
+        copyBtn.addEventListener('click', () => {
+            if (jsonData) {
+                navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2))
+                    .then(() => {
+                        copyBtn.textContent = '✅ Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = '📋 Copy JSON';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        alert('Failed to copy to clipboard');
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
+
